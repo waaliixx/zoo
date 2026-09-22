@@ -5,11 +5,7 @@ package Conexion;
 # Conexion
 # Proyecto: Base de datos no relacional - Zoologico (CouchDB + Perl)
 #
-# CouchDB no tiene un driver nativo como MySQL: se maneja 100% por su
-# API REST sobre HTTP con JSON. Por eso "conectar" en realidad significa
-# armar un cliente HTTP con la URL base y las credenciales correctas.
-#
-# Modulos usados (todos del core de Perl, no requieren cpan install):
+# Modulos usados (todos del core de Perl, no se requiere instalar nada):
 #   HTTP::Tiny    -> cliente HTTP
 #   JSON::PP      -> codificar/decodificar JSON
 #   MIME::Base64  -> autenticacion basica (usuario:contrasenia)
@@ -26,12 +22,6 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(conectar);
 
-# ---------------------------------------------------------------------------
-# EDITAR ACA: datos de conexion segun lo configurado en Fauxton.
-# En un proyecto real esto podria ir en variables de entorno, pero para
-# la tarea alcanza con dejarlo declarado y que cada uno lo ajuste a su
-# instalacion local.
-# ---------------------------------------------------------------------------
 our %CONFIG = (
     host     => 'localhost',
     port     => 5984,
@@ -40,18 +30,6 @@ our %CONFIG = (
     base     => 'zoologico',
 );
 
-# ---------------------------------------------------------------------------
-# conectar(%overrides)
-#
-# Arma y devuelve el objeto de conexion. Se le pueden pasar valores para
-# sobreescribir la configuracion por defecto, por ejemplo:
-#
-#   my $conexion = conectar();                       # usa %CONFIG
-#   my $conexion = conectar(base => 'zoologico_test'); # otra base
-#
-# El objeto devuelto es lo que los demas reciben como primer
-# parametro en sus funciones: crear_documento($conexion, ...), etc.
-# ---------------------------------------------------------------------------
 sub conectar {
     my (%overrides) = @_;
 
@@ -77,24 +55,6 @@ sub conectar {
     return bless $self, 'Conexion';
 }
 
-# ---------------------------------------------------------------------------
-# peticion($conexion, $metodo, $ruta, $cuerpo)
-#
-# Metodo central de bajo nivel: hace la peticion HTTP a CouchDB con las
-# credenciales de la conexion y devuelve la respuesta ya decodificada.
-# Los demas llaman a esto desde adentro de sus propias funciones
-# en vez de repetir HTTP::Tiny + JSON::PP + autenticacion cada uno.
-#
-#   $conexion->peticion('GET', '/zoologico/animal:001');
-#   $conexion->peticion('PUT', '/zoologico/animal:001', \%documento);
-#
-# $ruta siempre debe empezar con '/'. Si no incluye el nombre de la base,
-# usar $conexion->{base} para armarla, por ejemplo:
-#   $conexion->peticion('GET', '/' . $conexion->{base} . '/_all_docs');
-#
-# Devuelve un hashref:
-#   { ok => 1|0, status => 200, data => {...}, error => '...' }
-# ---------------------------------------------------------------------------
 sub peticion {
     my ($self, $metodo, $ruta, $cuerpo) = @_;
 
@@ -142,55 +102,7 @@ sub peticion {
     return $resultado;
 }
 
-# ---------------------------------------------------------------------------
-# url_base($conexion)  -> URL de la base de datos configurada, ej:
-#   http://localhost:5984/zoologico
-# Util para que las otras personas armen sus rutas sin repetir el nombre
-# de la base a mano en cada funcion.
-# ---------------------------------------------------------------------------
 sub url_base {
     my ($self) = @_;
     return $self->{base_url} . '/' . $self->{base};
 }
-
-1;
-
-__END__
-
-=head1 NAME
-
-Conexion - Modulo de conexion a CouchDB para el proyecto del zoologico
-
-=head1 SINOPSIS
-
-    use lib '.';
-    use Conexion qw(conectar);
-
-    my $conexion = conectar();
-
-    # Ejemplo de lo que haria la Persona 3 con esto:
-    my $res = $conexion->peticion('GET', '/');
-    if ($res->{ok}) {
-        print "CouchDB version $res->{data}{version}\n";
-    } else {
-        print "Error: $res->{error}\n";
-    }
-
-=head1 DESCRIPCION
-
-Queda lista la conexion
-(host, puerto, usuario, contrasenia, base de datos) para que el resto
-del equipo la use sin preocuparse por los detalles de HTTP ni JSON.
-
-=head1 ACUERDO DE EQUIPO
-
-Todas las funciones de CRUD reciben el objeto de conexion como primer
-parametro:
-
-    crear_documento($conexion, %datos);
-    leer_documento($conexion, $id);
-    listar_documentos($conexion);
-    actualizar_documento($conexion, $id, %cambios);
-    eliminar_documento($conexion, $id, $rev);
-
-=cut

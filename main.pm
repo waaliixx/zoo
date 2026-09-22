@@ -14,6 +14,10 @@ use ReadUpdate qw(
     actualizar_documento
 );
 
+use Delete qw(
+    eliminar_documento
+);
+
 my $conexion = conectar();
 
 while (1) {
@@ -21,47 +25,64 @@ while (1) {
     print "=============================\n";
     print "         ZOOLOGICO\n";
     print "=============================\n";
-    print "1. Leer documento por ID\n";
-    print "2. Listar documentos\n";
-    print "3. Actualizar documento\n";
-    print "4. Crear documento\n";
-    print "5. Salir\n";
+    print "1. Crear documento\n";
+    print "2. Leer documento por ID\n";
+    print "3. Listar documentos\n";
+    print "4. Actualizar documento\n";
+    print "5. Eliminar documento\n";
+    print "6. Salir\n";
     print "=============================\n";
     print "Seleccione una opcion: ";
 
     chomp(my $opcion = <STDIN>);
 
     if ($opcion eq '1') {
+        my $res = crear_documento($conexion);
 
+        if ($res->{ok}) {
+            print "\n";
+            print "Documento creado correctamente.\n";
+            print "ID generado: "
+                . ($res->{data}{id} // '')
+                . "\n";
+            print "Revision: "
+                . ($res->{data}{rev} // '')
+                . "\n";
+        }
+        else {
+            print "\n";
+            print "No se pudo crear el documento.\n";
+            print "Error: $res->{error}\n";
+        }
+    }
+
+    elsif ($opcion eq '2') {
         print "Ingrese el ID: ";
         chomp(my $id = <STDIN>);
 
         my $res = leer_documento($conexion, $id);
 
         if ($res->{ok}) {
-
             print "\n";
             print "ID: " . ($res->{data}{_id} // '') . "\n";
             print "Rev: " . ($res->{data}{_rev} // '') . "\n";
             print "Nombre: " . ($res->{data}{nombre} // 'No disponible') . "\n";
             print "Especie: " . ($res->{data}{especie} // 'No disponible') . "\n";
             print "Edad: " . ($res->{data}{edad} // 'No disponible') . "\n";
-
         }
         else {
             print "Error: $res->{error}\n";
         }
     }
 
-    elsif ($opcion eq '2') {
+    elsif ($opcion eq '3') {
         my $res = listar_documentos($conexion);
 
         if ($res->{ok}) {
             print "\n";
-            foreach my $fila (@{$res->{data}{rows}}) {
+            foreach my $fila (@{$res->{data}{rows} // []}) {
                 print "ID: " . ($fila->{id} // '') . "\n";
                 if ($fila->{doc}) {
-
                     print "Nombre: "
                         . ($fila->{doc}{nombre} // 'No disponible')
                         . "\n";
@@ -78,12 +99,11 @@ while (1) {
             }
         }
         else {
-
             print "Error: $res->{error}\n";
         }
     }
 
-    elsif ($opcion eq '3') {
+    elsif ($opcion eq '4') {
         print "Ingrese el ID del documento: ";
         chomp(my $id = <STDIN>);
 
@@ -95,7 +115,6 @@ while (1) {
             print "Nueva revision: "
                 . ($res->{data}{rev} // '')
                 . "\n";
-
         }
         else {
             print "\n";
@@ -104,29 +123,25 @@ while (1) {
         }
     }
 
-    elsif ($opcion eq '4') {
+    elsif ($opcion eq '5') {
+        print "Ingrese el ID del documento: ";
+        chomp(my $id = <STDIN>);
 
-    my $res = crear_documento($conexion);
+        my $res = eliminar_documento($conexion, $id);
 
-    if ($res->{ok}) {
-        print "\n";
-        print "Documento creado correctamente.\n";
-        print "ID generado: "
-            . ($res->{data}{id} // '')
-            . "\n";
-        print "Revision: "
-            . ($res->{data}{rev} // '')
-            . "\n";
-    }
-    else {
-        print "\n";
-        print "No se pudo crear el documento.\n";
-        print "Error: $res->{error}\n";
+        if ($res->{ok}) {
+            print "\n";
+            print "Documento eliminado correctamente.\n";
+            print "ID: $id\n";
+        }
+        else {
+            print "\n";
+            print "No se pudo eliminar el documento.\n";
+            print "Error: $res->{error}\n";
         }
     }
 
-    elsif ($opcion eq '5') {
-
+    elsif ($opcion eq '6') {
         print "Saliendo...\n";
         last;
     }

@@ -4,6 +4,10 @@ use warnings;
 use lib '.';
 use Conexion qw(conectar);
 
+use Create qw(
+    crear_documento
+);
+
 use ReadUpdate qw(
     leer_documento
     listar_documentos
@@ -20,7 +24,8 @@ while (1) {
     print "1. Leer documento por ID\n";
     print "2. Listar documentos\n";
     print "3. Actualizar documento\n";
-    print "4. Salir\n";
+    print "4. Crear documento\n";
+    print "5. Salir\n";
     print "=============================\n";
     print "Seleccione una opcion: ";
 
@@ -100,6 +105,27 @@ while (1) {
     }
 
     elsif ($opcion eq '4') {
+
+    my $res = crear_documento($conexion);
+
+    if ($res->{ok}) {
+        print "\n";
+        print "Documento creado correctamente.\n";
+        print "ID generado: "
+            . ($res->{data}{id} // '')
+            . "\n";
+        print "Revision: "
+            . ($res->{data}{rev} // '')
+            . "\n";
+    }
+    else {
+        print "\n";
+        print "No se pudo crear el documento.\n";
+        print "Error: $res->{error}\n";
+        }
+    }
+
+    elsif ($opcion eq '5') {
 
         print "Saliendo...\n";
         last;
